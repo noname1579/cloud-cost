@@ -1,6 +1,6 @@
 export interface CloudPrice {
   id: string
-  provider: 'DigitalOcean' | 'AWS' | 'Hetzner' | 'Vultr' | 'Linode'
+  provider: string
   name: string
   price: number
   currency: string
@@ -9,12 +9,24 @@ export interface CloudPrice {
   disk: number
   region: string
   lastUpdated: Date
+  isFavorite?: boolean
 }
 
-export interface PriceHistory {
+export interface FilterOptions {
+  providers: string[]
+  minPrice: number
+  maxPrice: number
+  minCPU: number
+  minRAM: number
+  search: string
+}
+
+export interface ComparisonItem {
   id: string
-  provider: string
   name: string
+  provider: string
   price: number
-  timestamp: Date
+  cpu: number
+  ram: number
+  disk: number
 }

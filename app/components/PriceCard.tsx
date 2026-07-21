@@ -5,13 +5,20 @@ import {
   CpuChipIcon, 
   ServerStackIcon, 
   DocumentIcon,
+  StarIcon,
+  ArrowsRightLeftIcon
 } from '@heroicons/react/24/outline'
+import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
 
 interface PriceCardProps {
   price: CloudPrice
   rubRate: number
   showRub: boolean
   darkMode: boolean
+  isFavorite: boolean
+  onToggleFavorite: () => void
+  onToggleComparison: () => void
+  isInComparison: boolean
 }
 
 const providerColors: Record<string, string> = {
@@ -22,10 +29,18 @@ const providerColors: Record<string, string> = {
   Linode: 'bg-gray-500',
 }
 
-export function PriceCard({ price, rubRate, showRub, darkMode }: PriceCardProps) {
+export function PriceCard({ 
+  price, 
+  rubRate, 
+  showRub, 
+  darkMode,
+  isFavorite,
+  onToggleFavorite,
+  onToggleComparison,
+  isInComparison
+}: PriceCardProps) {
   const priceInRub = price.price * rubRate
   
-  // Определяем категорию цены
   const getPriceCategory = (price: number) => {
     if (price < 10) return { label: '💎 Эконом', color: 'bg-green-100 text-green-700' }
     if (price < 20) return { label: '💰 Средний', color: 'bg-yellow-100 text-yellow-700' }
@@ -33,6 +48,7 @@ export function PriceCard({ price, rubRate, showRub, darkMode }: PriceCardProps)
   }
 
   const category = getPriceCategory(price.price)
+  const savings = price.price > 10 ? Math.round((price.price - 4.5) * 12) : 0
 
   return (
     <div className={`group rounded-2xl p-6 border transition-all hover:shadow-xl hover:-translate-y-1 ${
@@ -40,7 +56,7 @@ export function PriceCard({ price, rubRate, showRub, darkMode }: PriceCardProps)
         ? 'bg-gray-800 border-gray-700 hover:border-blue-500' 
         : 'bg-white border-gray-100 shadow-sm hover:border-blue-300'
     }`}>
-      {/* Header */}
+      {/* Header with actions */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div className={`w-3 h-3 rounded-full ${providerColors[price.provider] || 'bg-gray-500'} shadow-lg`}></div>
@@ -53,7 +69,35 @@ export function PriceCard({ price, rubRate, showRub, darkMode }: PriceCardProps)
             </p>
           </div>
         </div>
-        <div className="text-right">
+        <div className="flex gap-1">
+          <button
+            onClick={onToggleFavorite}
+            className="p-1 hover:scale-110 transition-transform"
+          >
+            {isFavorite ? (
+              <StarSolidIcon className="w-5 h-5 text-yellow-500" />
+            ) : (
+              <StarIcon className={`w-5 h-5 ${darkMode ? 'text-gray-500' : 'text-gray-300'}`} />
+            )}
+          </button>
+          <button
+            onClick={onToggleComparison}
+            className={`p-1 rounded transition-all ${
+              isInComparison 
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' 
+                : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            <ArrowsRightLeftIcon className={`w-5 h-5 ${
+              isInComparison ? 'text-blue-600' : darkMode ? 'text-gray-500' : 'text-gray-400'
+            }`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Price */}
+      <div className="mt-3 flex items-end justify-between">
+        <div>
           <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             {showRub ? `${Math.round(priceInRub)} ₽` : `${price.price} ${price.currency}`}
           </p>
@@ -61,7 +105,17 @@ export function PriceCard({ price, rubRate, showRub, darkMode }: PriceCardProps)
             / месяц
           </p>
         </div>
+        <div className={`text-xs px-2 py-0.5 rounded-full ${category.color}`}>
+          {category.label}
+        </div>
       </div>
+
+      {/* Savings */}
+      {savings > 0 && (
+        <div className="mt-2 text-sm text-green-600 dark:text-green-400">
+          💰 Экономия: ${savings}/год
+        </div>
+      )}
 
       {/* Specs */}
       <div className="mt-4 grid grid-cols-3 gap-2">
@@ -110,20 +164,6 @@ export function PriceCard({ price, rubRate, showRub, darkMode }: PriceCardProps)
         <div className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
           {new Date(price.lastUpdated).toLocaleString()}
         </div>
-      </div>
-
-      {/* Badge */}
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <div className={`text-xs px-2 py-0.5 rounded-full ${category.color}`}>
-          {category.label}
-        </div>
-        {showRub && (
-          <div className={`text-xs px-2 py-0.5 rounded-full ${
-            darkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600'
-          }`}>
-            ≈ {Math.round(priceInRub)} ₽
-          </div>
-        )}
       </div>
     </div>
   )
