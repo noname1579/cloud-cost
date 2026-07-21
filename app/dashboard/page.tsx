@@ -271,7 +271,7 @@ export default function Dashboard() {
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                 darkMode ? 'bg-blue-600' : 'bg-linear-to-br from-blue-600 to-indigo-600'
               }`}>
-                <CloudIcon className="w-6 h-6 text-white" />
+                <CloudIcon className="w-6 h-6 text-white fill-white" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
@@ -668,7 +668,7 @@ export default function Dashboard() {
           darkMode ? 'border-gray-700 text-gray-400' : 'border-gray-200 text-gray-500'
         }`}>
           <p>Курс: 1$ = {Math.round(rubRate)} ₽ • Обновлено: {new Date().toLocaleString()}</p>
-          <p className="mt-1">☁️ Cloud Cost Monitor — экономь на облачных серверах</p>
+          <p className="mt-1">☁️ Cloud Cost — экономь на облачных серверах</p>
         </footer>
       </main>
     </div>
