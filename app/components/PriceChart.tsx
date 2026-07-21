@@ -75,7 +75,7 @@ export function PriceChart({ data, darkMode, showRub = false, rubRate = 90 }: Pr
     maintainAspectRatio: false,
     animation: {
       duration: 800,
-      easing: 'easeOutQuart',
+      easing: 'easeOutQuart' as const,
     },
     plugins: {
       legend: {
@@ -89,7 +89,7 @@ export function PriceChart({ data, darkMode, showRub = false, rubRate = 90 }: Pr
           },
           padding: 20,
           usePointStyle: true,
-          pointStyle: 'circle',
+          pointStyle: 'circle' as const,
         },
       },
       tooltip: {
@@ -120,7 +120,7 @@ export function PriceChart({ data, darkMode, showRub = false, rubRate = 90 }: Pr
           color: darkMode ? '#9ca3af' : '#6b7280',
           font: {
             size: 12,
-            weight: '500' as const,
+            weight: 'normal' as const,
           },
           callback: function(value) {
             if (typeof value === 'number') {
@@ -138,7 +138,7 @@ export function PriceChart({ data, darkMode, showRub = false, rubRate = 90 }: Pr
           color: darkMode ? '#9ca3af' : '#6b7280',
           font: {
             size: 12,
-            weight: '500' as const,
+            weight: 'normal' as const,
           },
         },
       },

@@ -26,7 +26,6 @@ import toast from 'react-hot-toast'
 import Papa from 'papaparse'
 
 export default function Dashboard() {
-  // State
   const [prices, setPrices] = useState<CloudPrice[]>([])
   const [alerts, setAlerts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -41,6 +40,7 @@ export default function Dashboard() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [searchTerm, setSearchTerm] = useState('')
   const [showFilters, setShowFilters] = useState(false)
+  const [loadingStatus, setLoadingStatus] = useState(0)
   const [filters, setFilters] = useState<FilterOptions>({
     providers: [],
     minPrice: 0,
@@ -50,13 +50,32 @@ export default function Dashboard() {
     search: '',
   })
 
-  // Загрузка данных
+  const loadingMessages = [
+    'Инициализация Cloud Cost...',
+    'Подключение к облачным провайдерам...',
+    'Получение цен...',
+    'Обработка данных...',
+    'Построение графиков...',
+    'Почти готово...',
+    'Запуск дашборда...'
+  ]
+
   useEffect(() => {
     fetchPrices()
     loadExchangeRates()
     loadFavorites()
     loadComparison()
   }, [])
+
+  useEffect(() => {
+    if (!loading) return
+    
+    const interval = setInterval(() => {
+      setLoadingStatus((prev) => (prev + 1) % loadingMessages.length)
+    }, 1200)
+    
+    return () => clearInterval(interval)
+  }, [loading])
 
   const loadFavorites = () => {
     const saved = localStorage.getItem('favorites')
@@ -107,7 +126,6 @@ export default function Dashboard() {
     }
   }
 
-  // Избранное
   const toggleFavorite = (id: string) => {
     const newFavorites = favorites.includes(id)
       ? favorites.filter(f => f !== id)
@@ -121,7 +139,6 @@ export default function Dashboard() {
     })))
   }
 
-  // Сравнение
   const toggleComparison = (item: ComparisonItem) => {
     const exists = comparison.find(c => c.id === item.id)
     let newComparison
@@ -139,11 +156,9 @@ export default function Dashboard() {
     if (newComparison.length > 0) setShowComparison(true)
   }
 
-  // Фильтрация и сортировка
   const filteredAndSortedPrices = useMemo(() => {
     let result = [...prices]
 
-    // Поиск
     if (searchTerm) {
       result = result.filter(p =>
         p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -151,12 +166,10 @@ export default function Dashboard() {
       )
     }
 
-    // Фильтр по провайдеру
     if (selectedProvider !== 'Все') {
       result = result.filter(p => p.provider === selectedProvider)
     }
 
-    // Фильтр по цене
     if (filters.minPrice > 0) {
       result = result.filter(p => p.price >= filters.minPrice)
     }
@@ -164,17 +177,14 @@ export default function Dashboard() {
       result = result.filter(p => p.price <= filters.maxPrice)
     }
 
-    // Фильтр по CPU
     if (filters.minCPU > 0) {
       result = result.filter(p => p.cpu >= filters.minCPU)
     }
 
-    // Фильтр по RAM
     if (filters.minRAM > 0) {
       result = result.filter(p => p.ram >= filters.minRAM)
     }
 
-    // Сортировка
     result.sort((a, b) => {
       let compare = 0
       switch (sortBy) {
@@ -191,7 +201,6 @@ export default function Dashboard() {
     return result
   }, [prices, searchTerm, selectedProvider, filters, sortBy, sortOrder])
 
-  // Статистика
   const stats = useMemo(() => {
     if (!filteredAndSortedPrices.length) {
       return { total: 0, providers: 0, cheapest: 0, average: 0, savings: 0 }
@@ -207,7 +216,6 @@ export default function Dashboard() {
     return { total, providers, cheapest, average, savings }
   }, [filteredAndSortedPrices])
 
-  // Экспорт в CSV
   const exportCSV = () => {
     const data = filteredAndSortedPrices.map(p => ({
       'Провайдер': p.provider,
@@ -229,18 +237,6 @@ export default function Dashboard() {
     toast.success('CSV экспортирован!')
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-gray-50 to-gray-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-500">Загрузка цен...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Названия для сортировки на русском
   const sortLabels: Record<string, string> = {
     price: 'Цена',
     name: 'Название',
@@ -249,19 +245,65 @@ export default function Dashboard() {
     disk: 'Диск',
   }
 
-  // Названия полей для фильтров на русском
-  const filterLabels: Record<string, string> = {
-    minPrice: 'Мин. цена',
-    maxPrice: 'Макс. цена',
-    minCPU: 'Мин. CPU (ядер)',
-    minRAM: 'Мин. RAM (GB)',
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="text-center relative">
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-20 -left-20 w-64 h-64 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute -bottom-20 -right-20 w-64 h-64 rounded-full blur-3xl animate-pulse delay-1000"></div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-3xl animate-pulse delay-2000"></div>
+          </div>
+
+          <div>
+            <div className="relative inline-block">
+              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-2xl shadow-blue-500/30 animate-bounce-subtle">
+                <svg className="w-12 h-12 text-white" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C10.34 2 8.78 2.53 7.5 3.44C6.22 4.35 5.28 5.6 4.86 7.06C3.21 7.44 1.8 8.48 1 9.94C0.2 11.4 0 13.1 0 14.9C0 17.2 0.8 19.3 2.2 20.9C3.6 22.5 5.5 23.5 7.5 23.5H16.5C18.5 23.5 20.4 22.5 21.8 20.9C23.2 19.3 24 17.2 24 14.9C24 12.6 23.2 10.5 21.8 8.9C20.4 7.3 18.5 6.3 16.5 6.3C16.3 6.3 16.1 6.3 15.9 6.3C15.1 4.9 13.9 3.8 12.5 3.1C12.3 3.0 12.2 3.0 12 3.0V2Z" />
+                </svg>
+              </div>
+              <div className="absolute inset-0 rounded-2xl border-2 border-blue-400/30 animate-spin-slow" style={{ padding: '4px' }}></div>
+              <div className="absolute inset-0 rounded-2xl border-2 border-purple-400/30 animate-spin-slow-reverse" style={{ padding: '8px' }}></div>
+            </div>
+
+            <h2 className="mt-6 text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              Cloud Cost
+            </h2>
+
+            <div className="mt-4 h-8 flex items-center justify-center">
+              <div className="flex items-center gap-3">
+                <span className="text-gray-600 dark:text-gray-300 font-medium transition-all duration-300">
+                  {loadingMessages[loadingStatus]}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6 w-64 mx-auto">
+              <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full transition-all duration-1000"
+                  style={{ 
+                    width: `${((loadingStatus + 1) / loadingMessages.length) * 100}%` 
+                  }}
+                ></div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-center gap-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+              <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
       darkMode ? 'bg-gray-900 text-white' : 'bg-linear-to-br from-gray-50 via-white to-gray-100'
     }`}>
-      {/* Header */}
       <header className={`sticky top-0 z-50 backdrop-blur-md border-b transition-colors duration-300 ${
         darkMode ? 'bg-gray-900/80 border-gray-700' : 'bg-white/80 border-gray-100'
       }`}>
@@ -269,12 +311,14 @@ export default function Dashboard() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                darkMode ? 'bg-blue-600' : 'bg-linear-to-br from-blue-600 to-indigo-600'
+                darkMode ? 'bg-blue-600' : 'bg-gradient-to-br from-blue-600 to-indigo-600'
               }`}>
-                <CloudIcon className="w-6 h-6 text-white fill-white" />
+                <svg className="w-6 h-6 text-white fill-white" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C10.34 2 8.78 2.53 7.5 3.44C6.22 4.35 5.28 5.6 4.86 7.06C3.21 7.44 1.8 8.48 1 9.94C0.2 11.4 0 13.1 0 14.9C0 17.2 0.8 19.3 2.2 20.9C3.6 22.5 5.5 23.5 7.5 23.5H16.5C18.5 23.5 20.4 22.5 21.8 20.9C23.2 19.3 24 17.2 24 14.9C24 12.6 23.2 10.5 21.8 8.9C20.4 7.3 18.5 6.3 16.5 6.3C16.3 6.3 16.1 6.3 15.9 6.3C15.1 4.9 13.9 3.8 12.5 3.1C12.3 3.0 12.2 3.0 12 3.0V2Z" />
+                </svg>
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                <h1 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   Cloud Cost
                 </h1>
                 <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -284,7 +328,6 @@ export default function Dashboard() {
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              {/* Поиск */}
               <div className="relative">
                 <MagnifyingGlassIcon className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${
                   darkMode ? 'text-gray-500' : 'text-gray-400'
@@ -367,7 +410,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Фильтры - на русском */}
           {showFilters && (
             <div className={`mt-4 p-4 rounded-xl border ${
               darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
@@ -456,7 +498,6 @@ export default function Dashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className={`rounded-2xl p-4 border ${
             darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100 shadow-sm'
@@ -498,7 +539,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Comparison Panel */}
         {showComparison && comparison.length > 0 && (
           <div className={`rounded-2xl p-4 border mb-8 ${
             darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200 shadow-sm'
@@ -561,7 +601,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Sort Controls - на русском */}
         <div className="flex flex-wrap items-center gap-2 mb-6">
           <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             Сортировка:
@@ -593,7 +632,6 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Chart */}
         {filteredAndSortedPrices.length > 0 && (
           <div className={`rounded-2xl p-4 border mb-8 ${
             darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100 shadow-sm'
@@ -620,7 +658,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Prices Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredAndSortedPrices.map((price, index) => (
             <PriceCard 
